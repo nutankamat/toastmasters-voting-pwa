@@ -130,6 +130,14 @@
     background:#fff;color:var(--maroon);font-size:18px;cursor:pointer;line-height:1;}
   .iconbtn:hover{background:#fff5f5;}
   .iconbtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .clear-link{
+    background:none;border:0;padding:2px 0;margin:0;cursor:pointer;
+    font:600 11px var(--ui);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);transition:color .15s;
+  }
+  .clear-link:hover{color:var(--maroon);}
+  .clear-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:3px;}
+  .clear-link.clear-link-hidden{visibility:hidden;}
 
   .vote-cat{margin-bottom:6px;}
   .vote-cat .label{font-family:var(--serif);font-size:17px;font-weight:700;margin:0 0 9px;}
@@ -459,7 +467,8 @@ function renderSetup(){
       '</div>'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin:0 0 6px">'+
         '<label class="fld" style="margin:0">Nominees — one per line</label>'+
-        ((c.nominees||[]).length ? '<button type="button" class="btn-ghost btn-sm" style="width:auto;padding:4px 10px;font-size:12px" onclick="clearNominees(\''+c.id+'\')">Clear all</button>' : '')+
+        '<button type="button" id="clr-'+c.id+'" class="clear-link'+((c.nominees||[]).length?'':' clear-link-hidden')+'" '+
+          'onclick="clearNominees(\''+c.id+'\')">Clear all</button>'+
       '</div>'+
       '<textarea placeholder="e.g.&#10;Alex Rivera&#10;Priya Shah&#10;Sam Okafor" '+
         'oninput="setNominees(\''+c.id+'\',this.value)">'+esc((c.nominees||[]).join("\n"))+'</textarea>'+
@@ -537,6 +546,8 @@ function setNominees(id,v){
   var c=findCat(id); if(!c) return;
   c.nominees = v.split("\n").map(function(s){return s.trim();}).filter(Boolean);
   scheduleSave();
+  var btn = document.getElementById("clr-"+id);
+  if(btn) btn.classList.toggle("clear-link-hidden", c.nominees.length===0);
 }
 function clearNominees(id){
   var c=findCat(id); if(!c || !(c.nominees||[]).length) return;
