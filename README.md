@@ -14,8 +14,8 @@ accounts, no data leaves the phone.
 FILES IN THIS FOLDER
 --------------------
   index.html               The whole app (HTML, CSS, JavaScript in one file)
-  manifest.json     PWA metadata (name, icons, colours)
-  swservice-worker.js                    Service worker — caches the app for offline use
+  manifest.json            PWA metadata (name, icons, colours)
+  service-worker.js        Service worker — caches the app for offline use
   icon-192.png             App icon (192x192)
   icon-512.png             App icon (512x512)
   icon-maskable-512.png    Maskable icon for Android adaptive icons
@@ -66,7 +66,7 @@ Data is saved on the device automatically and survives a refresh. Use
 UPDATING THE APP LATER
 ----------------------
 If you change any file and re-upload:
-  - Open  service-workerw.js  and bump the cache name, e.g. change
+  - Open  service-worker.js  and bump the cache name, e.g. change
         const CACHE = "clubvote-v2";
     to  "clubvote-v3".
   - This makes installed devices download the new version on their next
