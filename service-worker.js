@@ -1,6 +1,6 @@
 /* Club Vote service worker — offline app shell.
    Bump CACHE when you change any cached file so devices pick up the update. */
-   const CACHE = "clubvote-v2";
+   const CACHE = "clubvote-v3";
    const ASSETS = [
      "./",
      "./index.html",
