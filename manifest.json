@@ -1,6 +1,6 @@
 {
-  "name": "Club Vote — Offline Voting",
-  "short_name": "Club Vote",
+  "name": "TM Club Vote — Offline Voting",
+  "short_name": "TM Club Vote",
   "description": "Offline ballot for club meetings. Collect votes and share winners with no internet.",
   "start_url": ".",
   "scope": ".",
