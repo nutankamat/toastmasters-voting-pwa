@@ -448,7 +448,10 @@ function renderSetup(){
         '<button class="iconbtn" title="Remove category" aria-label="Remove category" '+
           'onclick="removeCat(\''+c.id+'\')">&times;</button>'+
       '</div>'+
-      '<label class="fld">Nominees — one per line</label>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin:0 0 6px">'+
+        '<label class="fld" style="margin:0">Nominees — one per line</label>'+
+        ((c.nominees||[]).length ? '<button type="button" class="btn-ghost btn-sm" style="width:auto;padding:4px 10px;font-size:12px" onclick="clearNominees(\''+c.id+'\')">Clear all</button>' : '')+
+      '</div>'+
       '<textarea placeholder="e.g.&#10;Alex Rivera&#10;Priya Shah&#10;Sam Okafor" '+
         'oninput="setNominees(\''+c.id+'\',this.value)">'+esc((c.nominees||[]).join("\n"))+'</textarea>'+
     '</div>';
@@ -518,6 +521,12 @@ function setNominees(id,v){
   var c=findCat(id); if(!c) return;
   c.nominees = v.split("\n").map(function(s){return s.trim();}).filter(Boolean);
   save();
+}
+function clearNominees(id){
+  var c=findCat(id); if(!c || !(c.nominees||[]).length) return;
+  if(!confirm("Clear all nominees in \""+(c.name||"this category")+"\"?")) return;
+  c.nominees = [];
+  save(); render();
 }
 function addCat(){ state.categories.push({id:cid(),name:"",nominees:[]}); save(); render(); }
 function removeCat(id){
