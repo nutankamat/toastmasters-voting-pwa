@@ -10,6 +10,14 @@ device or exported as an image / text to share.
 Everything runs on the device. No internet is needed at the meeting, no
 accounts, no data leaves the phone.
 
+NOT OK WITH A SHARED DEVICE? If members would rather vote privately from
+their own phones, see the `hosted-mode/` folder — it's still fully offline
+(no internet, just a local Wi-Fi network), but each person votes on their
+own phone instead of passing one device around. It can be hosted either
+from the organizer's Android phone (via Termux) or straight from a laptop
+(Mac/Windows/Linux) — voters themselves can be iPhone or Android either
+way. See `hosted-mode/README.md` for setup steps for both options.
+
 
 FILES IN THIS FOLDER
 --------------------

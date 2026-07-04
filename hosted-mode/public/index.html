@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>TM Club Vote — Hosted Voting</title>
+<style>
+  :root{
+    --ink:#2A1A1E;
+    --maroon:#7A2E3A;
+    --maroon-deep:#5E222C;
+    --gold:#B8860B;
+    --gold-soft:#C8962B;
+    --paper:#FAF6EF;
+    --card:#FFFFFF;
+    --line:#E7DFD4;
+    --muted:#8A7E78;
+    --good:#3B7A57;
+    --shadow:0 1px 2px rgba(42,26,30,.06), 0 8px 24px rgba(42,26,30,.08);
+    --serif:Georgia, "Times New Roman", serif;
+    --ui:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--ui);
+    line-height:1.5;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:560px;margin:0 auto;
+    padding-top:env(safe-area-inset-top);
+    padding-left:max(16px,env(safe-area-inset-left));
+    padding-right:max(16px,env(safe-area-inset-right));
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+
+  header{
+    text-align:center;
+    padding:26px 44px 8px;
+    position:relative;
+  }
+  .gear{
+    position:absolute;top:6px;right:-2px;
+    width:44px;height:44px;border-radius:50%;
+    display:grid;place-items:center;
+    border:1px solid var(--line);background:var(--card);
+    color:var(--muted);font-size:18px;line-height:1;cursor:pointer;
+    opacity:.7;box-shadow:var(--shadow);transition:opacity .15s, color .15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .gear:hover{opacity:1;color:var(--maroon);}
+  .gear:focus-visible{outline:2px solid var(--gold);outline-offset:2px;opacity:1;}
+  .gear[aria-current="true"]{opacity:1;color:var(--maroon);border-color:var(--maroon);}
+  .eyebrow{
+    font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--maroon);font-weight:700;
+  }
+  .meeting-title{
+    font-family:var(--serif);
+    font-size:24px;font-weight:700;line-height:1.15;
+    margin:4px 0 0;color:var(--ink);
+  }
+  .meeting-sub{color:var(--muted);font-size:13px;margin-top:2px;}
+
+  nav.tabs{
+    display:flex;gap:4px;
+    background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:4px;margin:14px 0 18px;
+    box-shadow:var(--shadow);
+  }
+  nav.tabs button{
+    flex:1;border:0;background:transparent;cursor:pointer;
+    font-family:var(--ui);font-size:13px;font-weight:600;color:var(--muted);
+    padding:9px 6px;border-radius:999px;transition:background .15s,color .15s;
+  }
+  nav.tabs button[aria-selected="true"]{
+    background:var(--maroon);color:#fff;
+  }
+  nav.tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow);
+  }
+  .card h2{
+    font-family:var(--serif);font-size:18px;margin:0 0 4px;font-weight:700;
+  }
+  .hint{color:var(--muted);font-size:13px;margin:0 0 12px;}
+  label.fld{display:block;font-size:12px;font-weight:600;color:var(--maroon);
+    text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px;}
+  input[type=text], input[type=date], input[type=number], input[type=password], textarea{
+    width:100%;font-family:var(--ui);font-size:16px;color:var(--ink);
+    background:var(--paper);border:1px solid var(--line);border-radius:10px;
+    padding:11px 12px;resize:vertical;-webkit-appearance:none;appearance:none;
+  }
+  input[type=text]:focus, input[type=date]:focus, input[type=number]:focus, input[type=password]:focus, textarea:focus{
+    outline:2px solid var(--gold-soft);outline-offset:1px;border-color:transparent;
+  }
+  textarea{min-height:88px;line-height:1.6;}
+  input[type=date]{min-height:44px;line-height:1.25;}
+  input[type=date]::-webkit-calendar-picker-indicator{
+    cursor:pointer;opacity:.55;padding:2px;border-radius:4px;
+    filter:invert(22%) sepia(28%) saturate(1600%) hue-rotate(300deg) brightness(70%);
+  }
+  input[type=date]::-webkit-calendar-picker-indicator:hover{opacity:1;background:#fdf4f5;}
+
+  .btn{
+    -webkit-appearance:none;appearance:none;cursor:pointer;
+    font-family:var(--ui);font-size:15px;font-weight:700;
+    border-radius:12px;padding:13px 16px;border:1px solid transparent;
+    transition:transform .04s ease, filter .15s ease;width:100%;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .btn-primary{background:var(--maroon);color:#fff;}
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-gold{background:var(--gold);color:#2A1A1E;}
+  .btn-gold:hover{filter:brightness(1.05);}
+  .btn-ghost{background:transparent;color:var(--maroon);border-color:var(--line);}
+  .btn-row{display:flex;gap:8px;}
+  .btn-row .btn{width:auto;flex:1;}
+  .btn-sm{font-size:13px;padding:9px 12px;}
+
+  .cat-edit{border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:12px;background:var(--paper);}
+  .cat-edit .top{display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;}
+  .cat-edit .top input{flex:1;font-weight:600;}
+  .iconbtn{flex:0 0 auto;width:40px;height:42px;border-radius:10px;border:1px solid var(--line);
+    background:#fff;color:var(--maroon);font-size:18px;cursor:pointer;line-height:1;}
+  .iconbtn:hover{background:#fff5f5;}
+  .iconbtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+  .vote-cat{margin-bottom:6px;}
+  .vote-cat .label{font-family:var(--serif);font-size:17px;font-weight:700;margin:0 0 9px;}
+  .opt{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+    background:var(--card);border:1.5px solid var(--line);border-radius:12px;
+    padding:13px 14px;margin-bottom:8px;cursor:pointer;font-size:15px;font-weight:600;
+    color:var(--ink);transition:border-color .12s, background .12s;
+  }
+  .opt .tick{
+    flex:0 0 auto;width:22px;height:22px;border-radius:50%;
+    border:2px solid var(--line);display:grid;place-items:center;
+  }
+  .opt[aria-pressed="true"]{border-color:var(--maroon);background:#fdf4f5;}
+  .opt[aria-pressed="true"] .tick{border-color:var(--maroon);background:var(--maroon);}
+  .opt[aria-pressed="true"] .tick::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff;}
+  .opt:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+  .ballot-count{
+    text-align:center;font-size:13px;color:var(--muted);margin:2px 0 14px;
+  }
+  .ballot-count b{color:var(--maroon);font-size:15px;}
+
+  .vote-bar{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;
+    background:linear-gradient(180deg, rgba(250,246,239,0), var(--paper) 28%);
+    padding:18px 16px calc(16px + env(safe-area-inset-bottom));
+  }
+  .vote-bar-inner{max-width:560px;margin:0 auto;}
+  .btn-submit{
+    width:100%;cursor:pointer;border:0;border-radius:14px;
+    background:var(--gold);color:#2A1A1E;
+    font-family:var(--ui);font-weight:800;font-size:19px;letter-spacing:.01em;
+    padding:18px 16px;box-shadow:0 6px 22px rgba(184,134,11,.45);
+    animation:nudge 2.4s ease-in-out infinite;
+  }
+  .btn-submit:hover{filter:brightness(1.05);}
+  .btn-submit:active{transform:translateY(1px);}
+  .btn-submit:focus-visible{outline:3px solid var(--maroon);outline-offset:2px;}
+  @keyframes nudge{0%,92%,100%{transform:translateY(0)}96%{transform:translateY(-3px)}}
+  .submit-note{
+    text-align:center;font-size:13px;font-weight:600;color:var(--maroon);
+    margin:9px 0 0;
+  }
+  .vote-spacer{height:150px;}
+
+  .confirm{text-align:center;padding:34px 16px;}
+  .seal{
+    width:84px;height:84px;border-radius:50%;margin:0 auto 16px;
+    background:radial-gradient(circle at 50% 38%, #fff5d6, var(--gold));
+    display:grid;place-items:center;font-size:40px;color:#fff;
+    box-shadow:0 6px 18px rgba(184,134,11,.35);
+  }
+  .confirm h2{font-family:var(--serif);font-size:22px;margin:0 0 4px;}
+  .confirm p{color:var(--muted);margin:0 0 22px;}
+
+  .res-cat{margin-bottom:14px;}
+  .res-cat .name{font-family:var(--serif);font-size:18px;font-weight:700;margin:0 0 10px;}
+  .reveal-btn{background:#fff;border:1.5px dashed var(--gold);color:var(--maroon-deep);
+    border-radius:12px;padding:14px;width:100%;cursor:pointer;font-weight:700;font-size:15px;font-family:var(--ui);}
+  .reveal-btn:hover{background:#fffaf0;}
+  .reveal-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+  .winner{
+    display:flex;align-items:center;gap:12px;
+    background:linear-gradient(180deg,#fffdf6,#fff7e6);
+    border:1.5px solid var(--gold);border-radius:14px;padding:13px 14px;margin-bottom:10px;
+    animation:pop .35s cubic-bezier(.2,.9,.3,1.3);
+  }
+  @keyframes pop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+  .winner .medal{flex:0 0 auto;width:42px;height:42px;border-radius:50%;
+    background:radial-gradient(circle at 50% 38%, #fff0b8, var(--gold));
+    display:grid;place-items:center;font-size:22px;}
+  .winner .who{font-family:var(--serif);font-size:19px;font-weight:700;line-height:1.1;}
+  .winner .pts{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  .tally{margin-top:4px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;font-size:13px;}
+  .bar-row .nm{flex:0 0 38%;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar-track{flex:1;height:9px;background:var(--line);border-radius:999px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--maroon);border-radius:999px;transition:width .5s ease;}
+  .bar-row .ct{flex:0 0 auto;color:var(--muted);width:30px;text-align:right;}
+  .tie-note{font-size:12px;color:var(--good);font-weight:600;margin:-2px 0 8px;}
+
+  .empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:14px;}
+  .divider{height:1px;background:var(--line);margin:16px 0;border:0;}
+  .danger{color:#a4303f;}
+  footer{text-align:center;color:var(--muted);font-size:11px;padding:18px 0 28px;}
+  .pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;
+    color:var(--good);background:#e9f3ec;border-radius:999px;padding:3px 9px;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+  .org-bar{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .seg{display:flex;flex:1;background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:4px;box-shadow:var(--shadow);}
+  .seg button{flex:1;border:0;background:transparent;cursor:pointer;
+    font:600 13px var(--ui);color:var(--muted);padding:8px 6px;border-radius:999px;}
+  .seg button.on{background:var(--maroon);color:#fff;}
+  .seg button:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .btn-back{flex:0 0 auto;border:1px solid var(--line);background:var(--card);
+    color:var(--maroon);font:600 13px var(--ui);padding:9px 12px;border-radius:999px;cursor:pointer;}
+  .btn-back:hover{background:#fff5f5;}
+  .btn-back:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+
+  .two-col{display:flex;gap:10px;}
+  .two-col > div{flex:1;min-width:0;}
+  .opt-tag{font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0;
+    font-size:11px;margin-left:4px;}
+  .linked-note{background:#fff;border:1px dashed var(--line);border-radius:10px;
+    padding:10px 12px;font-size:13px;color:var(--muted);line-height:1.45;}
+  .linked-note b{color:var(--maroon);}
+  .date-preview{font-size:13px;color:var(--maroon);font-weight:600;margin:8px 0 0;min-height:18px;}
+  .lock-on{color:var(--good);font-size:13px;font-weight:600;margin:10px 0 0;}
+  .lock-off{color:#a4303f;font-size:13px;font-weight:600;margin:10px 0 0;}
+
+  .lock{text-align:center;padding:30px 18px;}
+  .lock-ico{font-size:40px;margin-bottom:6px;}
+  .lock h2{font-family:var(--serif);font-size:22px;margin:0 0 4px;}
+  .lock input{text-align:center;font-size:20px;letter-spacing:.15em;margin-bottom:4px;max-width:240px;margin-left:auto;margin-right:auto;}
+  .lock-err{color:#a4303f;font-size:13px;font-weight:600;min-height:18px;margin:4px 0 12px;}
+  .lock .btn{max-width:240px;margin:0 auto;}
+  .conn-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+    letter-spacing:.03em;color:var(--good);background:#e9f3ec;border-radius:999px;padding:3px 10px;margin:0 0 12px;}
+  .conn-pill.bad{color:#a4303f;background:#fbeaec;}
+  .conn-dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <button id="gear" class="gear" title="Organizer area" aria-label="Organizer area" onclick="go('setup')">&#9881;</button>
+    <div class="eyebrow">Hosted Ballot &middot; Same Network</div>
+    <h1 class="meeting-title" id="mtgTitle">TM Club Vote</h1>
+    <div class="meeting-sub" id="mtgSub">Connecting…</div>
+  </header>
+
+  <main id="view"></main>
+
+  <footer>Runs over the local hotspot only &middot; Nothing leaves this network</footer>
+</div>
+
+<script>
+/* ---------- Networked state ---------- */
+var PIN = "";              // organizer passcode, kept in memory only (never persisted)
+var view = "boot";
+var draft = {};             // current voter's in-progress ballot
+var ballotId = null;        // token for the ballot just submitted, lets voter undo it
+var cfg = null;             // last fetched /api/ballot-info
+var setupDraft = null;      // organizer's editable copy, loaded from /api/setup
+var resultsData = null;     // last fetched /api/results
+var pendingView = "setup";  // where to go after a successful unlock
+var pollTimer = null;
+
+function cid(){ return "c" + Math.random().toString(36).slice(2,8); }
+
+/* ---------- API helper ---------- */
+function api(path, opts){
+  opts = opts || {};
+  var headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+  if (PIN) headers["X-Pin"] = PIN;
+  return fetch(path, Object.assign({}, opts, { headers: headers }))
+    .then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(body){
+        if (!r.ok) { var err = new Error(body.error || ("HTTP " + r.status)); err.status = r.status; throw err; }
+        return body;
+      });
+    });
+}
+
+/* ---------- Boot ---------- */
+function boot(){
+  document.getElementById("view").innerHTML = '<div class="card empty">Connecting to host&hellip;</div>';
+  api("/api/ballot-info").then(function(data){
+    cfg = data;
+    var hasNominees = cfg.categories.some(function(c){ return (c.nominees||[]).length>0; });
+    go(hasNominees ? "vote" : "setup");
+  }).catch(function(){
+    document.getElementById("view").innerHTML =
+      '<div class="card empty">Could not reach the host.<br><br>Make sure this device is connected to the '+
+      'organizer&rsquo;s hotspot, then<br><br>'+
+      '<button class="btn btn-ghost btn-sm" onclick="boot()">Try again</button></div>';
+  });
+}
+
+/* ---------- Navigation ---------- */
+function go(v){
+  if ((v==="setup" || v==="results") && cfg && cfg.pinSet && !PIN){
+    pendingView = v;
+    view = "lock";
+    stopPoll();
+    render();
+    return;
+  }
+  stopPoll();
+  view = v;
+  var inOrg = (v==="setup" || v==="results" || v==="lock");
+  document.getElementById("gear").setAttribute("aria-current", String(inOrg));
+
+  if (v==="vote"){
+    draft = {}; ballotId = null;
+    document.getElementById("view").innerHTML = '<div class="card empty">Loading&hellip;</div>';
+    api("/api/ballot-info").then(function(data){ cfg=data; render(); startVotePoll(); window.scrollTo({top:0,behavior:"instant"}); })
+      .catch(function(){ boot(); });
+  } else if (v==="setup"){
+    document.getElementById("view").innerHTML = '<div class="card empty">Loading&hellip;</div>';
+    api("/api/setup").then(function(data){
+      setupDraft = data; setupDraft.newPin = "";
+      render(); window.scrollTo({top:0,behavior:"instant"});
+    }).catch(function(e){ handleProtectedError(e, "setup"); });
+  } else if (v==="results"){
+    document.getElementById("view").innerHTML = '<div class="card empty">Loading&hellip;</div>';
+    api("/api/results").then(function(data){
+      resultsData = data; render(); startResultsPoll(); window.scrollTo({top:0,behavior:"instant"});
+    }).catch(function(e){ handleProtectedError(e, "results"); });
+  } else {
+    render();
+    window.scrollTo({top:0,behavior:"instant"});
+  }
+}
+
+function handleProtectedError(e, targetView){
+  if (e.status === 401){ PIN=""; pendingView=targetView; view="lock"; render(); }
+  else { toast("Could not reach host — check the connection"); go("vote"); }
+}
+
+function stopPoll(){ if (pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+function startVotePoll(){
+  stopPoll();
+  pollTimer = setInterval(function(){
+    api("/api/ballot-info").then(function(data){
+      cfg = data;
+      var el = document.getElementById("liveBallotCount");
+      if (el) el.innerHTML = "<b>"+cfg.ballotCount+"</b> ballot"+(cfg.ballotCount===1?"":"s")+" collected so far";
+    }).catch(function(){});
+  }, 4000);
+}
+function startResultsPoll(){
+  stopPoll();
+  pollTimer = setInterval(function(){
+    api("/api/results").then(function(data){ resultsData=data; render(); }).catch(function(){});
+  }, 3000);
+}
+
+function syncHeader(){
+  var c = cfg || {};
+  document.getElementById("mtgTitle").textContent = c.club && c.club.trim() ? c.club.trim() : "TM Club Vote";
+  var bits=[];
+  if (c.meetingNo) bits.push("Meeting "+c.meetingNo);
+  if (c.date) bits.push(formatDate(c.date));
+  var sub = bits.join(" · ");
+  if (c.theme) sub += (sub ? " · " : "") + "Theme: " + c.theme;
+  document.getElementById("mtgSub").textContent = sub ? sub : "Same-network hosted vote";
+}
+
+function formatDate(iso){
+  if(!iso) return "";
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if(!m) return iso;
+  var d = new Date(+m[1], +m[2]-1, +m[3]);
+  var days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var mon=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  return days[d.getDay()]+", "+d.getDate()+" "+mon[d.getMonth()]+" "+d.getFullYear();
+}
+
+/* ---------- Render dispatch ---------- */
+function render(){
+  syncHeader();
+  var el = document.getElementById("view");
+  if (view==="lock")    el.innerHTML = renderLock();
+  if (view==="setup")   el.innerHTML = renderSetup();
+  if (view==="vote")    el.innerHTML = renderVote();
+  if (view==="results") el.innerHTML = renderResults();
+  if (view==="lock"){ var f=document.getElementById("pinField"); if(f) f.focus(); }
+}
+
+/* ---------- Lock screen ---------- */
+function renderLock(){
+  return ''+
+  '<div class="card lock">'+
+    '<div class="lock-ico">&#128274;</div>'+
+    '<h2>Organizer area</h2>'+
+    '<p class="hint">Enter the passcode to reach setup and results.</p>'+
+    '<input type="password" id="pinField" inputmode="numeric" autocomplete="off" '+
+      'placeholder="Passcode" onkeydown="if(event.key===\'Enter\')tryUnlock()">'+
+    '<p class="lock-err" id="pinErr">&nbsp;</p>'+
+    '<button class="btn btn-primary" onclick="tryUnlock()">Unlock</button>'+
+    '<hr class="divider">'+
+    '<button class="btn btn-ghost btn-sm" onclick="go(\'vote\')">&larr; Back to voting</button>'+
+  '</div>';
+}
+function tryUnlock(){
+  var f = document.getElementById("pinField");
+  PIN = f ? f.value : "";
+  var check = pendingView==="results" ? api("/api/results") : api("/api/setup");
+  check.then(function(data){
+    if (pendingView==="results"){ resultsData=data; } else { setupDraft=data; setupDraft.newPin=""; }
+    go(pendingView);
+  }).catch(function(){
+    PIN = "";
+    var e=document.getElementById("pinErr"); if(e) e.textContent="Incorrect passcode — try again.";
+    if(f){ f.value=""; f.focus(); }
+  });
+}
+
+/* organizer toolbar shown atop Setup and Results */
+function orgBar(active){
+  return '<div class="org-bar">'+
+    '<div class="seg">'+
+      '<button class="'+(active==="setup"?"on":"")+'" onclick="go(\'setup\')">Setup</button>'+
+      '<button class="'+(active==="results"?"on":"")+'" onclick="go(\'results\')">Results</button>'+
+    '</div>'+
+    '<button class="btn-back" onclick="go(\'vote\')" title="Return to voting">&larr; Voting</button>'+
+  '</div>';
+}
+
+/* ---------- Setup ---------- */
+function renderSetup(){
+  var s = setupDraft;
+  var cats = s.categories.map(function(c){
+    return '<div class="cat-edit">'+
+      '<div class="top">'+
+        '<input type="text" value="'+esc(c.name)+'" aria-label="Category name" '+
+          'oninput="setCatName(\''+c.id+'\',this.value)">'+
+        '<button class="iconbtn" title="Remove category" aria-label="Remove category" '+
+          'onclick="removeCat(\''+c.id+'\')">&times;</button>'+
+      '</div>'+
+      '<label class="fld">Nominees — one per line</label>'+
+      '<textarea placeholder="e.g.&#10;Alex Rivera&#10;Priya Shah&#10;Sam Okafor" '+
+        'oninput="setNominees(\''+c.id+'\',this.value)">'+esc((c.nominees||[]).join("\n"))+'</textarea>'+
+    '</div>';
+  }).join("");
+
+  return ''+
+  orgBar("setup")+
+  '<div class="linked-note" style="margin-bottom:14px">'+
+    '<b>Hosting this server:</b> it can run from the organizer&rsquo;s Android '+
+    'phone (via Termux) or straight from a laptop (Mac/Windows/Linux) — both '+
+    'work the same way for voters. See <code>hosted-mode/README.md</code> in '+
+    'the project for setup steps for either.'+
+  '</div>'+
+  '<div class="card">'+
+    '<h2>Meeting details</h2>'+
+    '<p class="hint">These appear on the results you share. Saved automatically to the host.</p>'+
+    '<label class="fld">Club name</label>'+
+    '<input type="text" value="'+esc(s.club)+'" placeholder="Sunrise Toastmasters" '+
+      'oninput="setField(\'club\',this.value)" style="margin-bottom:12px">'+
+    '<label class="fld">Theme</label>'+
+    '<input type="text" value="'+esc(s.theme)+'" placeholder="New Beginnings" '+
+      'oninput="setField(\'theme\',this.value)" style="margin-bottom:12px">'+
+    '<div class="two-col">'+
+      '<div><label class="fld">Meeting number</label>'+
+        '<input type="text" inputmode="numeric" value="'+esc(s.meetingNo)+'" placeholder="214" '+
+          'oninput="setField(\'meetingNo\',this.value)"></div>'+
+      '<div><label class="fld">Meeting date</label>'+
+        '<input type="date" value="'+esc(s.date)+'" '+
+          'onchange="setField(\'date\',this.value)"></div>'+
+    '</div>'+
+    '<p class="date-preview" id="datePreview">'+ (s.date ? "&#128197; "+esc(formatDate(s.date)) : "") +'</p>'+
+    '<label class="fld" style="margin-top:12px">Toastmaster of the Day <span class="opt-tag">optional</span></label>'+
+    '<input type="text" value="'+esc(s.tmod)+'" placeholder="Priya Shah" '+
+      'oninput="setField(\'tmod\',this.value)">'+
+  '</div>'+
+
+  '<div class="card">'+
+    '<h2>Award categories</h2>'+
+    '<p class="hint">Add the people eligible in each category. Leave a category empty to skip it during voting.</p>'+
+    cats +
+    '<button class="btn btn-ghost btn-sm" onclick="addCat()">+ Add category</button>'+
+  '</div>'+
+
+  '<div class="card">'+
+    '<h2>Organizer passcode</h2>'+
+    '<p class="hint">Protects Setup and Results on every device on the network — voters only ever reach the voting screen.</p>'+
+    '<label class="fld">'+(s.pinSet ? "Set a new passcode (leave blank to keep current)" : "Passcode")+'</label>'+
+    '<input type="text" inputmode="numeric" value="'+esc(s.newPin||"")+'" placeholder="e.g. 1234" '+
+      'oninput="setNewPin(this.value)">'+
+    (s.pinSet ? '<p class="lock-on" id="pinStatus">&#128274; Lock is on for every device on this network.</p>'
+               : '<p class="lock-off" id="pinStatus">&#9888; No passcode set — results are open to anyone on the network.</p>')+
+    (s.pinSet ? '<button class="btn btn-ghost btn-sm danger" style="margin-top:10px" onclick="removePin()">Remove passcode</button>' : '')+
+  '</div>'+
+
+  '<div class="card">'+
+    '<div class="conn-pill" id="liveBallotPill"><span class="conn-dot"></span> <span id="setupBallotCount">'+ ((cfg && typeof cfg.ballotCount==="number")?cfg.ballotCount:"?") +'</span> ballots collected so far</div>'+
+    '<button class="btn btn-primary" onclick="go(\'vote\')">Go to voting &rarr;</button>'+
+    '<hr class="divider">'+
+    '<button class="btn btn-ghost btn-sm danger" onclick="resetAll()">Clear ballots &amp; start a new meeting</button>'+
+  '</div>';
+}
+
+function setField(k,v){
+  setupDraft[k]=v; scheduleSave();
+  if(k==="date") updateDatePreview();
+}
+function setNewPin(v){ setupDraft.newPin=v; scheduleSave(); }
+function updateDatePreview(){
+  var el=document.getElementById("datePreview"); if(!el) return;
+  el.innerHTML = setupDraft.date ? "&#128197; "+esc(formatDate(setupDraft.date)) : "";
+}
+function setCatName(id,v){ var c=findCat(id); if(c){ c.name=v; scheduleSave(); } }
+function setNominees(id,v){
+  var c=findCat(id); if(!c) return;
+  c.nominees = v.split("\n").map(function(s){return s.trim();}).filter(Boolean);
+  scheduleSave();
+}
+function addCat(){ setupDraft.categories.push({id:cid(),name:"",nominees:[]}); render(); scheduleSave(); }
+function removeCat(id){
+  setupDraft.categories = setupDraft.categories.filter(function(c){return c.id!==id;});
+  render(); scheduleSave();
+}
+function findCat(id){ return setupDraft.categories.find(function(c){return c.id===id;}); }
+
+function removePin(){
+  if(!confirm("Remove the passcode? Setup and Results will be open to anyone on the network.")) return;
+  api("/api/setup", { method:"POST", body: JSON.stringify({ clearPin:true }) })
+    .then(function(){ setupDraft.pinSet=false; setupDraft.newPin=""; PIN=""; render(); toast("Passcode removed"); })
+    .catch(function(){ toast("Could not update — check connection"); });
+}
+
+var saveTimer=null;
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveSetup, 500); }
+function saveSetup(){
+  var body = {
+    club: setupDraft.club, theme: setupDraft.theme, meetingNo: setupDraft.meetingNo,
+    date: setupDraft.date, tmod: setupDraft.tmod, categories: setupDraft.categories
+  };
+  if (setupDraft.newPin) body.pin = setupDraft.newPin;
+  api("/api/setup", { method:"POST", body: JSON.stringify(body) })
+    .then(function(){
+      if (setupDraft.newPin){ PIN = setupDraft.newPin; setupDraft.pinSet = true; }
+      toast("Saved");
+    })
+    .catch(function(){ toast("Could not save — check connection"); });
+}
+
+function resetAll(){
+  if(!confirm("This clears all ballots and revealed results. Categories and nominees stay. Continue?")) return;
+  api("/api/reset", { method:"POST" })
+    .then(function(){ toast("Ballots cleared"); })
+    .catch(function(){ toast("Could not reset — check connection"); });
+}
+
+/* ---------- Voting ---------- */
+function renderVote(){
+  var active = (cfg.categories||[]).filter(function(c){ return (c.nominees||[]).length>0; });
+  if (active.length===0){
+    return '<div class="card empty">No nominees yet.<br><br>'+
+      '<button class="btn btn-ghost btn-sm" onclick="go(\'setup\')">Go to Setup to add some</button></div>';
+  }
+  var blocks = active.map(function(c){
+    var opts = (c.nominees||[]).map(function(n){
+      var on = draft[c.id]===n;
+      return '<button class="opt" aria-pressed="'+on+'" '+
+        'onclick="pick(\''+c.id+'\',this,\''+escAttr(n)+'\')">'+
+        '<span class="tick"></span><span>'+esc(n)+'</span></button>';
+    }).join("");
+    return '<div class="vote-cat"><p class="label">'+esc(c.name)+'</p>'+opts+'</div>';
+  }).join('<hr class="divider">');
+
+  return ''+
+  '<div class="ballot-count" id="liveBallotCount"><b>'+cfg.ballotCount+'</b> ballot'+(cfg.ballotCount===1?"":"s")+' collected so far</div>'+
+  '<div class="card">'+ blocks +
+    '<p class="hint" style="text-align:center;margin:14px 0 0">Pick one per category — you can leave a category blank.</p>'+
+  '</div>'+
+  '<div class="vote-spacer"></div>'+
+  '<div class="vote-bar"><div class="vote-bar-inner">'+
+    '<button class="btn-submit" onclick="submitBallot()">&#10003;&nbsp; Submit my vote</button>'+
+    '<p class="submit-note">This sends your vote to the organizer&rsquo;s phone</p>'+
+  '</div></div>';
+}
+
+function pick(catId, btn, name){
+  if(draft[catId]===name){ delete draft[catId]; }
+  else { draft[catId]=name; }
+  var parent = btn.parentNode;
+  Array.prototype.forEach.call(parent.querySelectorAll(".opt"), function(o){
+    o.setAttribute("aria-pressed","false");
+  });
+  if(draft[catId]===name) btn.setAttribute("aria-pressed","true");
+}
+
+function submitBallot(){
+  var keys = Object.keys(draft);
+  if(keys.length===0){
+    if(!confirm("No selections made. Submit a blank ballot anyway?")) return;
+  }
+  var payload = Object.assign({}, draft);
+  api("/api/vote", { method:"POST", body: JSON.stringify(payload) })
+    .then(function(data){
+      ballotId = data.ballotId;
+      cfg.ballotCount = data.ballotCount;
+      draft = {};
+      showConfirm(data.ballotCount);
+    })
+    .catch(function(){ toast("Could not submit — check you're still on the host's network"); });
+}
+
+function showConfirm(count){
+  stopPoll();
+  document.getElementById("view").innerHTML =
+  '<div class="card confirm">'+
+    '<div class="seal">&#10003;</div>'+
+    '<h2>Ballot recorded</h2>'+
+    '<p>'+count+' total &middot; you can hand your phone back to yourself now.</p>'+
+    '<button class="btn btn-primary" onclick="go(\'vote\')">Done</button>'+
+    '<hr class="divider">'+
+    '<button class="btn btn-ghost btn-sm" onclick="undoLast()">Undo my ballot (mistake?)</button>'+
+  '</div>';
+  window.scrollTo({top:0});
+}
+function undoLast(){
+  if(!ballotId){ go("vote"); return; }
+  api("/api/undo", { method:"POST", body: JSON.stringify({ ballotId: ballotId }) })
+    .then(function(){ ballotId=null; toast("Ballot removed"); go("vote"); })
+    .catch(function(){ toast("Could not undo — it may already be tallied"); });
+}
+
+/* ---------- Results ---------- */
+function renderResults(){
+  var r = resultsData;
+  if (!r || r.ballotCount===0){
+    return orgBar("results")+'<div class="card empty">No ballots yet.<br><br>'+
+      '<button class="btn btn-ghost btn-sm" onclick="go(\'vote\')">Go to voting</button></div>';
+  }
+  var active = r.categories.filter(function(c){ return (c.nominees||[]).length>0; });
+
+  var blocks = active.map(function(c){
+    var rows = c.rows||[];
+    if(rows.length===0){
+      return '<div class="res-cat"><p class="name">'+esc(c.name)+'</p>'+
+        '<div class="hint">No votes cast in this category.</div></div>';
+    }
+    if(!c.revealed){
+      return '<div class="res-cat"><p class="name">'+esc(c.name)+'</p>'+
+        '<button class="reveal-btn" onclick="reveal(\''+c.id+'\')">Tap to reveal winner</button></div>';
+    }
+    var top = rows[0].count;
+    var winners = rows.filter(function(row){return row.count===top;});
+    var max = rows[0].count || 1;
+    var winnerBlock = winners.map(function(w){
+      return '<div class="winner"><div class="medal">&#127942;</div>'+
+        '<div><div class="who">'+esc(w.name)+'</div>'+
+        '<div class="pts">'+w.count+' vote'+(w.count===1?"":"s")+'</div></div></div>';
+    }).join("");
+    var tie = winners.length>1 ? '<div class="tie-note">Tie &mdash; '+winners.length+' winners</div>' : '';
+    var bars = rows.map(function(row){
+      var pct = Math.round((row.count/max)*100);
+      return '<div class="bar-row"><span class="nm">'+esc(row.name)+'</span>'+
+        '<span class="bar-track"><span class="bar-fill" style="width:'+pct+'%"></span></span>'+
+        '<span class="ct">'+row.count+'</span></div>';
+    }).join("");
+    return '<div class="res-cat"><p class="name">'+esc(c.name)+'</p>'+
+      winnerBlock + tie + '<div class="tally">'+bars+'</div></div>';
+  }).join('<hr class="divider">');
+
+  var anyHidden = active.some(function(c){ return (c.rows||[]).length>0 && !c.revealed; });
+
+  return ''+
+  orgBar("results")+
+  '<div class="ballot-count"><span class="pill">'+r.ballotCount+' ballots counted</span></div>'+
+  '<div class="card">'+ blocks +'</div>'+
+  '<div class="card">'+
+    (anyHidden ? '<button class="btn btn-gold" onclick="revealAll()" style="margin-bottom:8px">Reveal all winners</button>' : '')+
+    '<div class="btn-row" style="margin-bottom:8px">'+
+      '<button class="btn btn-primary btn-sm" onclick="shareResults()">Share results</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="copyResults()">Copy text</button>'+
+    '</div>'+
+    '<button class="btn btn-ghost btn-sm" onclick="downloadImage()">Download results image</button>'+
+  '</div>';
+}
+
+function reveal(id){
+  api("/api/reveal", { method:"POST", body: JSON.stringify({ catId:id }) })
+    .then(function(){ return api("/api/results"); })
+    .then(function(data){ resultsData=data; render(); })
+    .catch(function(){ toast("Could not reveal — check connection"); });
+}
+function revealAll(){
+  api("/api/reveal", { method:"POST", body: JSON.stringify({ all:true }) })
+    .then(function(){ return api("/api/results"); })
+    .then(function(data){ resultsData=data; render(); })
+    .catch(function(){ toast("Could not reveal — check connection"); });
+}
+
+/* ---------- Share / export ---------- */
+function resultsText(){
+  var c = cfg||{}, lines = [];
+  lines.push((c.club||"TM Club Vote").trim());
+  var head=[];
+  if(c.meetingNo) head.push("Meeting "+c.meetingNo);
+  if(c.date) head.push(formatDate(c.date));
+  if(head.length) lines.push(head.join(" · "));
+  if(c.theme) lines.push("Theme: "+c.theme.trim());
+  if(c.tmod)  lines.push("Toastmaster of the Day: "+c.tmod.trim());
+  lines.push("");
+  lines.push("Winners");
+  lines.push("");
+  (resultsData.categories||[]).filter(function(cat){return (cat.nominees||[]).length>0;}).forEach(function(cat){
+    var rows = cat.rows||[];
+    if(rows.length===0) return;
+    var top = rows[0].count;
+    var winners = rows.filter(function(row){return row.count===top;}).map(function(row){return row.name;});
+    lines.push(cat.name+": "+winners.join(" & "));
+  });
+  return lines.join("\n");
+}
+
+function copyResults(){
+  var txt = resultsText();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ toast("Results copied"); }, function(){ fallbackCopy(txt); });
+  } else { fallbackCopy(txt); }
+}
+function fallbackCopy(txt){
+  var ta=document.createElement("textarea"); ta.value=txt;
+  ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta);
+  ta.select(); try{document.execCommand("copy"); toast("Results copied");}catch(e){alert(txt);}
+  document.body.removeChild(ta);
+}
+function shareResults(){
+  var txt = resultsText();
+  if(navigator.share){
+    navigator.share({title:((cfg&&cfg.club)||"TM Club Vote")+" — results", text:txt}).catch(function(){});
+  } else {
+    copyResults();
+    toast("Sharing not available — copied instead");
+  }
+}
+
+function downloadImage(){
+  var c = cfg||{};
+  var active = (resultsData.categories||[]).filter(function(cat){ return (cat.nominees||[]).length>0 && (cat.rows||[]).length>0; });
+  var W=820, pad=56, lh=70;
+  var extra = (c.theme?1:0) + (c.tmod?1:0);
+  var headerBottom = 64 + 40 + 28 + extra*24 + 22;
+  var H = headerBottom + 56 + active.length*lh + 50;
+  var s = 2;
+  var cv=document.createElement("canvas"); cv.width=W*s; cv.height=H*s;
+  var x=cv.getContext("2d"); x.scale(s,s);
+
+  x.fillStyle="#FAF6EF"; x.fillRect(0,0,W,H);
+  x.fillStyle="#7A2E3A"; x.fillRect(0,0,W,12);
+
+  var topY=64;
+  x.fillStyle="#7A2E3A"; x.font="700 16px system-ui, sans-serif";
+  x.fillText("WINNERS", pad, topY);
+  x.fillStyle="#2A1A1E"; x.font="700 36px Georgia, serif";
+  x.fillText(clip(x,(c.club||"TM Club Vote"),W-pad*2), pad, topY+40);
+  var cy=topY+40;
+  cy+=28; x.fillStyle="#8A7E78"; x.font="400 18px system-ui, sans-serif";
+  var sub=[]; if(c.meetingNo) sub.push("Meeting "+c.meetingNo); if(c.date) sub.push(formatDate(c.date));
+  if(sub.length) x.fillText(clip(x,sub.join("  ·  "),W-pad*2), pad, cy);
+  if(c.theme){ cy+=24; x.fillStyle="#7A2E3A"; x.font="italic 17px Georgia, serif";
+    x.fillText(clip(x,"Theme: "+c.theme,W-pad*2), pad, cy); }
+  if(c.tmod){ cy+=24; x.fillStyle="#8A7E78"; x.font="400 16px system-ui, sans-serif";
+    x.fillText(clip(x,"Toastmaster of the Day: "+c.tmod,W-pad*2), pad, cy); }
+  var ruleY=cy+22;
+  x.strokeStyle="#E7DFD4"; x.lineWidth=1; x.beginPath(); x.moveTo(pad,ruleY); x.lineTo(W-pad,ruleY); x.stroke();
+
+  var y=ruleY+56;
+  active.forEach(function(cat){
+    var rows=cat.rows; var top=rows[0].count;
+    var winners=rows.filter(function(row){return row.count===top;}).map(function(row){return row.name;}).join(" & ");
+    x.fillStyle="#8A7E78"; x.font="600 15px system-ui, sans-serif";
+    x.fillText(cat.name.toUpperCase(), pad, y-22);
+    x.fillStyle="#B8860B"; x.beginPath(); x.arc(pad+11, y+2, 11, 0, Math.PI*2); x.fill();
+    x.fillStyle="#2A1A1E"; x.font="700 26px Georgia, serif";
+    x.fillText(clip(x,winners,W-pad*2-40), pad+34, y+10);
+    y+=lh;
+  });
+  x.fillStyle="#8A7E78"; x.font="400 13px system-ui, sans-serif";
+  x.fillText("Tallied over local network · "+new Date().toLocaleDateString(), pad, H-26);
+
+  var url=cv.toDataURL("image/png");
+  var a=document.createElement("a");
+  a.href=url; a.download=(slug(c.club||"club-vote"))+"-results.png";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast("Image downloaded");
+}
+function clip(ctx,str,maxW){
+  if(ctx.measureText(str).width<=maxW) return str;
+  while(str.length>1 && ctx.measureText(str+"…").width>maxW){ str=str.slice(0,-1); }
+  return str+"…";
+}
+function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"")||"club-vote"; }
+
+/* ---------- Toast ---------- */
+var toastT;
+function toast(msg){
+  var t=document.getElementById("toast");
+  if(!t){ t=document.createElement("div"); t.id="toast";
+    t.style.cssText="position:fixed;left:50%;bottom:26px;transform:translateX(-50%);"+
+      "background:#2A1A1E;color:#fff;padding:11px 18px;border-radius:999px;font:600 14px system-ui;"+
+      "z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;max-width:88vw;text-align:center;";
+    document.body.appendChild(t);
+  }
+  t.textContent=msg; t.style.opacity="1";
+  clearTimeout(toastT); toastT=setTimeout(function(){t.style.opacity="0";},2200);
+}
+
+/* ---------- Utils ---------- */
+function esc(s){ return String(s).replace(/[&<>"]/g,function(m){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m]; }); }
+function escAttr(s){ return String(s).replace(/['\\]/g,"\\$&").replace(/"/g,"&quot;"); }
+
+boot();
+</script>
+</body>
+</html>
