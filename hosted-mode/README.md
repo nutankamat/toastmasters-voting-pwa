@@ -130,6 +130,12 @@ RUNNING IT AT A MEETING (both options)
      automatically once nominees are added (no need to have people refresh,
      but if someone loaded the page before setup was done, a pull-to-refresh
      or reopening the page will pick up the categories).
+     Typing IP addresses is a pain, so Setup also has a **"Show QR code to
+     join"** button — it turns the exact address you're on into a QR code
+     (generated entirely offline, no network call), so voters can just scan
+     it with their phone's camera instead of typing anything. Only works if
+     you reached Setup via the device's real network IP, not "localhost" —
+     the button will warn you if that's the case.
   3. Voters vote from their own phones and submit. The organizer can watch
      the ballot count tick up live from the Setup or Results screen.
   4. When ready, the organizer opens Results (passcode-protected), reveals
