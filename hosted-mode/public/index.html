@@ -297,7 +297,8 @@ var setupDraft = null;      // organizer's editable copy, loaded from /api/setup
 var resultsData = null;     // last fetched /api/results
 var pendingView = "setup";  // where to go after a successful unlock
 var pollTimer = null;
-var qrShown = false;        // whether the "scan to join" QR panel is expanded in Setup
+var setupQrShown = false;   // "scan to join" QR panel expanded in Setup — independent of vote screen
+var voteQrShown = false;    // "scan to join" QR panel expanded on the Vote screen — independent of Setup
 
 function cid(){ return "c" + Math.random().toString(36).slice(2,8); }
 
@@ -501,17 +502,16 @@ function renderSetup(){
 
   return ''+
   orgBar("setup")+
-  '<div class="linked-note" style="margin-bottom:14px">'+
-    '<b>Hosting this server:</b> it can run from the organizer&rsquo;s Android '+
-    'phone (via Termux) or straight from a laptop (Mac/Windows/Linux) — both '+
-    'work the same way for voters. See <code>hosted-mode/README.md</code> in '+
-    'the project for setup steps for either.'+
-  '</div>'+
   '<div class="card">'+
     '<h2>Invite voters</h2>'+
-    '<p class="hint">Skip the IP address — show this QR code and voters just scan it with their camera.</p>'+
-    '<button type="button" class="btn btn-gold btn-sm" onclick="toggleJoinQR()">'+(qrShown?"Hide QR code":"Show QR code to join")+'</button>'+
-    (qrShown ? '<div style="margin-top:14px">'+joinQRHtml()+'</div>' : '')+
+    '<p class="hint">Skip the IP address — show this QR code and voters just scan it with their camera. '+
+    'If this device gets the same network address every meeting (common when it hosts its own hotspot), '+
+    'download it once and reuse the same printout every time.</p>'+
+    '<div class="btn-row">'+
+      '<button type="button" class="btn btn-gold btn-sm" onclick="toggleSetupQR()">'+(setupQrShown?"Hide QR code":"Show QR code")+'</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="downloadJoinQR()">Download to print</button>'+
+    '</div>'+
+    (setupQrShown ? '<div style="margin-top:14px">'+joinQRHtml()+'</div>' : '')+
   '</div>'+
   '<div class="card">'+
     '<h2>Meeting details</h2>'+
@@ -562,7 +562,8 @@ function renderSetup(){
   '</div>';
 }
 
-function toggleJoinQR(){ qrShown = !qrShown; render(); }
+function toggleSetupQR(){ setupQrShown = !setupQrShown; render(); }
+function toggleVoteQR(){ voteQrShown = !voteQrShown; render(); }
 
 function joinQRHtml(){
   var url = location.origin + "/";
@@ -585,6 +586,60 @@ function joinQRHtml(){
     '<div style="max-width:220px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px">'+svg+'</div>'+
     '<p style="text-align:center;margin:12px 0 0;font-size:13px;color:var(--muted)">Or type this address:</p>'+
     '<p style="text-align:center;font-weight:700;color:var(--maroon);word-break:break-all;margin:2px 0 0">'+esc(url)+'</p>';
+}
+
+// Prints/posts stay valid meeting to meeting as long as this device keeps
+// getting the same network IP (typical when it's the same phone/laptop
+// creating its own hotspot each time — see hosted-mode/README.md).
+function downloadJoinQR(){
+  var url = location.origin + "/";
+  if (location.hostname === "localhost" || location.hostname === "127.0.0.1"){
+    toast("Reopen via this device's network IP first — localhost won't work for others");
+    return;
+  }
+  var qr;
+  try {
+    qr = qrcode(0, "M");
+    qr.addData(url);
+    qr.make();
+  } catch(e){ toast("Could not generate a QR code"); return; }
+
+  var img = new Image();
+  img.onload = function(){
+    var W = 640, pad = 48, titleH = 92, footerH = 74;
+    var qrSize = img.width;
+    var H = pad + titleH + qrSize + footerH + pad;
+    var s = 2;
+    var cv = document.createElement("canvas");
+    cv.width = W*s; cv.height = H*s;
+    var x = cv.getContext("2d"); x.scale(s,s);
+
+    x.fillStyle = "#FAF6EF"; x.fillRect(0,0,W,H);
+    x.fillStyle = "#7A2E3A"; x.fillRect(0,0,W,10);
+
+    x.textAlign = "center";
+    x.fillStyle = "#7A2E3A"; x.font = "700 14px system-ui, sans-serif";
+    x.fillText("SCAN TO VOTE", W/2, pad+28);
+    x.fillStyle = "#2A1A1E"; x.font = "700 28px Georgia, serif";
+    x.fillText(clip(x, (cfg&&cfg.club)||"TM Club Vote", W-pad*2), W/2, pad+62);
+
+    var qrX = (W-qrSize)/2, qrY = pad+titleH;
+    x.drawImage(img, qrX, qrY, qrSize, qrSize);
+
+    x.fillStyle = "#8A7E78"; x.font = "600 15px system-ui, sans-serif";
+    x.fillText(clip(x, url, W-pad*2), W/2, qrY+qrSize+32);
+    x.font = "400 12px system-ui, sans-serif";
+    x.fillText("Join the same Wi-Fi network first, then scan or open this address", W/2, qrY+qrSize+52);
+    x.textAlign = "start";
+
+    var out = cv.toDataURL("image/png");
+    var a = document.createElement("a");
+    a.href = out; a.download = slug((cfg&&cfg.club)||"club-vote")+"-join-qr.png";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    toast("QR image downloaded");
+  };
+  img.onerror = function(){ toast("Could not render QR image"); };
+  img.src = qr.createDataURL(8, 8);
 }
 
 function setField(k,v){
@@ -674,6 +729,10 @@ function renderVote(){
 
   return ''+
   '<div class="ballot-count" id="liveBallotCount"><b>'+cfg.ballotCount+'</b> ballot'+(cfg.ballotCount===1?"":"s")+' collected so far</div>'+
+  '<div style="text-align:center;margin:0 0 14px">'+
+    '<button type="button" class="clear-link" onclick="toggleVoteQR()">'+(voteQrShown?"Hide join QR":"Show join QR for new voters")+'</button>'+
+    (voteQrShown ? '<div style="margin-top:12px">'+joinQRHtml()+'</div>' : '')+
+  '</div>'+
   '<div class="card">'+ blocks +
     '<p class="hint" style="text-align:center;margin:14px 0 0">Pick one per category — you can leave a category blank.</p>'+
   '</div>'+

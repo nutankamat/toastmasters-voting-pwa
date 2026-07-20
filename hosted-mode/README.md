@@ -130,12 +130,20 @@ RUNNING IT AT A MEETING (both options)
      automatically once nominees are added (no need to have people refresh,
      but if someone loaded the page before setup was done, a pull-to-refresh
      or reopening the page will pick up the categories).
-     Typing IP addresses is a pain, so Setup also has a **"Show QR code to
-     join"** button — it turns the exact address you're on into a QR code
-     (generated entirely offline, no network call), so voters can just scan
-     it with their phone's camera instead of typing anything. Only works if
-     you reached Setup via the device's real network IP, not "localhost" —
-     the button will warn you if that's the case.
+     Typing IP addresses is a pain, so Setup also has a **"Show QR code"**
+     button — it turns the exact address you're on into a QR code (generated
+     entirely offline, no network call), so voters can just scan it with
+     their phone's camera instead of typing anything. Only works if you
+     reached Setup via the device's real network IP, not "localhost" — the
+     button will warn you if that's the case. There's also a small "Show
+     join QR for new voters" link right on the Vote screen itself — anyone
+     can open it, no organizer passcode needed, handy for a spare tablet
+     left showing the Vote screen at the door.
+     If this device tends to get the same network address every meeting
+     (typical when it's hosting its own hotspot — see "IS THIS URL EVER
+     FIXED?" below), use **"Download to print"** next to it to save the QR
+     as an image once and reuse the same printout at every future meeting,
+     no app interaction needed on the day.
   3. Voters vote from their own phones and submit. The organizer can watch
      the ballot count tick up live from the Setup or Results screen.
   4. When ready, the organizer opens Results (passcode-protected), reveals
@@ -150,6 +158,30 @@ left off.
 To start a fresh meeting later, use "Clear ballots & start a new meeting"
 in Setup, or simply delete `hosted-mode/data/state.json` before starting
 the server (this resets everything, including categories).
+
+
+IS THIS URL EVER FIXED?
+-------------------------
+Often, yes — if the same device hosts every meeting via its own hotspot
+(not a venue router), its hotspot address is usually fixed by the OS, not
+randomly reassigned each time:
+  - Android hotspot: almost always `192.168.43.1`
+  - iPhone Personal Hotspot: almost always `172.20.10.1`
+  - Mac Internet Sharing: usually `192.168.2.1`
+
+Check what address you got once, and it'll likely be the same next
+meeting — bookmark it, or use the "Download to print" QR button in Setup
+to save a QR/poster you can reuse forever without reopening the app.
+
+If instead you join a **venue's own WiFi router** each time, the address
+is assigned by that router and can change between visits (some routers
+keep giving the same device the same address, but it's not guaranteed).
+A true fix there means setting a static IP on the host device or a DHCP
+reservation on the router — both are router-specific, so there's no single
+set of steps here. In practice this matters less than it sounds: voters
+never need to know or type the address at all — they just scan whatever
+QR code is currently on screen — so a changing address mostly only affects
+your own bookmark, not the meeting itself.
 
 
 UPDATING THE PORT
