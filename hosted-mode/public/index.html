@@ -294,15 +294,32 @@ var pollTimer = null;
 
 function cid(){ return "c" + Math.random().toString(36).slice(2,8); }
 
+// One vote per device: a random token generated once per browser and reused
+// on every visit, so the server can tell "this phone already voted" apart
+// from "a new phone." Not real identity — clearing site data or using a
+// different browser/device gets a fresh token.
+function getVoterToken(){
+  var t;
+  try {
+    t = localStorage.getItem("tmvote.voter");
+    if(!t){ t = "v"+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2); localStorage.setItem("tmvote.voter", t); }
+  } catch(e){
+    if(!window.__tmvoteVoterFallback) window.__tmvoteVoterFallback = "v"+Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2);
+    t = window.__tmvoteVoterFallback;
+  }
+  return t;
+}
+var VOTER = getVoterToken();
+
 /* ---------- API helper ---------- */
 function api(path, opts){
   opts = opts || {};
-  var headers = Object.assign({ "Content-Type": "application/json" }, opts.headers || {});
+  var headers = Object.assign({ "Content-Type": "application/json", "X-Voter": VOTER }, opts.headers || {});
   if (PIN) headers["X-Pin"] = PIN;
   return fetch(path, Object.assign({}, opts, { headers: headers }))
     .then(function(r){
       return r.json().catch(function(){ return {}; }).then(function(body){
-        if (!r.ok) { var err = new Error(body.error || ("HTTP " + r.status)); err.status = r.status; throw err; }
+        if (!r.ok) { var err = new Error(body.error || ("HTTP " + r.status)); err.status = r.status; err.body = body; throw err; }
         return body;
       });
     });
@@ -340,8 +357,11 @@ function go(v){
   if (v==="vote"){
     draft = {}; ballotId = null;
     document.getElementById("view").innerHTML = '<div class="card empty">Loading&hellip;</div>';
-    api("/api/ballot-info").then(function(data){ cfg=data; render(); startVotePoll(); window.scrollTo({top:0,behavior:"instant"}); })
-      .catch(function(){ boot(); });
+    api("/api/ballot-info").then(function(data){
+      cfg=data;
+      if(cfg.alreadyVoted) ballotId = cfg.ballotId;
+      render(); startVotePoll(); window.scrollTo({top:0,behavior:"instant"});
+    }).catch(function(){ boot(); });
   } else if (v==="setup"){
     document.getElementById("view").innerHTML = '<div class="card empty">Loading&hellip;</div>';
     api("/api/setup").then(function(data){
@@ -594,6 +614,14 @@ function resetAll(){
 
 /* ---------- Voting ---------- */
 function renderVote(){
+  if (cfg.alreadyVoted){
+    return '<div class="card confirm">'+
+      '<div class="seal">&#10003;</div>'+
+      '<h2>You&rsquo;ve already voted</h2>'+
+      '<p>This device already submitted a ballot for this meeting — one ballot per device.</p>'+
+      '<button class="btn btn-ghost btn-sm" onclick="undoLast()">Undo my ballot to vote again</button>'+
+    '</div>';
+  }
   var active = (cfg.categories||[]).filter(function(c){ return (c.nominees||[]).length>0; });
   if (active.length===0){
     return '<div class="card empty">No nominees yet.<br><br>'+
@@ -644,7 +672,16 @@ function submitBallot(){
       draft = {};
       showConfirm(data.ballotCount);
     })
-    .catch(function(){ toast("Could not submit — check you're still on the host's network"); });
+    .catch(function(e){
+      if (e.status === 409){
+        cfg.alreadyVoted = true;
+        if (e.body && e.body.ballotId) ballotId = e.body.ballotId;
+        toast("You've already voted from this device");
+        render();
+      } else {
+        toast("Could not submit — check you're still on the host's network");
+      }
+    });
 }
 
 function showConfirm(count){

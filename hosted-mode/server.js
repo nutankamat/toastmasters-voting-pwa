@@ -55,13 +55,25 @@ function checkPin(req) {
   return req.headers['x-pin'] === state.pin;
 }
 
-function publicConfig() {
+function publicConfig(voterToken) {
+  const existing = findBallotByVoter(voterToken);
   return {
     club: state.club, theme: state.theme, meetingNo: state.meetingNo,
     date: state.date, tmod: state.tmod, pinSet: !!state.pin,
     categories: state.categories.map(c => ({ id: c.id, name: c.name, nominees: c.nominees || [] })),
-    ballotCount: state.ballots.length
+    ballotCount: state.ballots.length,
+    alreadyVoted: !!existing,
+    ballotId: existing ? existing.id : undefined
   };
+}
+
+// One ballot per device: browsers send a random token they generate once and
+// keep in localStorage. This blocks accidental/casual re-votes from the same
+// phone, not a determined person switching devices — there's no login system
+// to enforce identity beyond that.
+function findBallotByVoter(token) {
+  if (!token) return null;
+  return state.ballots.find(b => b.voter && b.voter === token) || null;
 }
 
 function tally(catId) {
@@ -127,18 +139,28 @@ const server = http.createServer(async (req, res) => {
 
   try {
     // --- Voter-facing: no pin required ---
+    const voterToken = typeof req.headers['x-voter'] === 'string' ? req.headers['x-voter'].slice(0, 128) : '';
+
     if (pathname === '/api/ballot-info' && req.method === 'GET') {
-      return send(res, 200, publicConfig());
+      return send(res, 200, publicConfig(voterToken));
     }
 
     if (pathname === '/api/vote' && req.method === 'POST') {
+      const dup = findBallotByVoter(voterToken);
+      if (voterToken && dup) {
+        return send(res, 409, {
+          error: 'You have already submitted a ballot from this device.',
+          ballotId: dup.id,
+          ballotCount: state.ballots.length
+        });
+      }
       const body = await readJsonBody(req);
       const validIds = new Set(state.categories.map(c => c.id));
       const picks = {};
       Object.keys(body || {}).forEach(k => {
         if (validIds.has(k) && typeof body[k] === 'string' && body[k]) picks[k] = body[k];
       });
-      const ballot = { id: cid(), ts: Date.now(), picks };
+      const ballot = { id: cid(), ts: Date.now(), picks, voter: voterToken || null };
       state.ballots.push(ballot);
       state.revealed = {};
       saveState();

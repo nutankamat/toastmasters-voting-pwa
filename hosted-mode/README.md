@@ -164,10 +164,15 @@ THINGS TO KNOW
   - The organizer passcode is checked by the server on every request now
     (not just hidden in the app), so it actually keeps other voters out of
     Setup/Results, not just out of the UI.
-  - There's no login system — anyone who reaches the vote screen can submit
-    a ballot, same trust model as passing a single device around. Nothing
-    stops a determined person from voting twice from their own phone; this
-    tool assumes a room of trusted club members, not an adversarial election.
-  - Right after submitting, a voter can tap "Undo my ballot" to retract just
-    that one ballot (handy for a mis-tap). That only works for the ballot
-    they just cast, not anyone else's.
+  - There's no login system, so enforcement is **one ballot per device**, not
+    truly one per person: each phone gets a random token on first visit
+    (stored in that browser only) and the server rejects a second vote from
+    the same token, with an "You've already voted" screen in its place. This
+    stops accidental double-taps and casual re-votes from the same phone, but
+    a determined person could still clear their browser's site data or use a
+    second device — this tool assumes a room of trusted club members, not an
+    adversarial election.
+  - A voter can tap "Undo my ballot" — right after submitting, or later from
+    the "You've already voted" screen — to retract their own ballot and vote
+    again. That only works for the ballot tied to their own device, not
+    anyone else's.
